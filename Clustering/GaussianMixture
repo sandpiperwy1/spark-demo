@@ -1,0 +1,44 @@
+%livy.spark
+
+//算法名称-高斯混合
+
+import java.util.Arrays
+import cn.neucloud.dasuan.analysis.clustering.GaussianMixture
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.mllib.clustering.GaussianMixtureModel
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.SparkConf
+
+//spark上下文准备
+val conf = new SparkConf().setAppName("testGM").setMaster("local[5]")
+val jsc = JavaSparkContext.fromSparkContext(sc)
+val sqlContext = new SQLContext(sc)
+//数据准备
+val data = jsc.parallelize(
+ Arrays.asList(
+  Row(1.0, 2.0),
+  Row(2.0, 4.0),
+  Row(3.0, 5.0),
+  Row(4.5,5.0),
+  Row(2.5,3.0)
+   )
+ )
+val schemaString = "c1 c2"
+val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, DoubleType, true)))
+val df = sqlContext.createDataFrame(data, schema)
+//应用算法
+val gaussianMixture = new GaussianMixture
+val model = gaussianMixture.cluster(sc,df, 3, 10, 0.001, 0)
+val weights = model.weights
+for(i<-0 until(weights.length)){
+  println(weights(i))
+}
+//新点预测
+val point: Array[Double] = new Array[Double](2)
+point(0) = 1
+point(1) = 3
+val pPoint = Vectors.dense(point)
+val cluster = gaussianMixture.predict(model, pPoint)
+println(cluster)
