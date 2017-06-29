@@ -1,0 +1,36 @@
+%livy.spark
+
+//算法名称-广义似然比
+
+import java.util.Arrays
+import cn.neucloud.dasuan.analysis.stat.hypotest.glr.ComputeGLR
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.SparkConf
+
+//spark上下文准备
+val conf = new SparkConf().setMaster("local").setAppName("testMle")
+val jsc = JavaSparkContext.fromSparkContext(sc)
+val sqlContext = new SQLContext(sc)
+//数据准备
+val data = jsc.parallelize(
+  Arrays.asList(
+	Row(11.117686),Row(20.728264),Row(33.794003),
+	Row(41.555668),Row(55.257105),Row(60.134758),
+	Row(72.844179),Row(83.089599),Row(90.202951),
+	Row(101.268993),Row(113.795615),Row(126.053744),
+	Row(130.450658),Row(141.262964),Row(150.426961),
+	Row(162.379259),Row(173.225800),Row(180.300970)
+  )
+)
+val schemaString = "x"
+val schema =
+  StructType(
+	schemaString.split(" ").map(fieldName => StructField(fieldName, DoubleType, true)))
+var df = sqlContext.createDataFrame(data, schema)
+//应用算法
+val htResult = ComputeGLR.glr(df,"exponential",100,0.1)
+println(htResult.getConclusion())
+println(htResult.getPvalue())
+println(htResult.getStatistic())

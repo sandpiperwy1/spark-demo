@@ -1,0 +1,32 @@
+%livy.spark
+
+//算法名称-基本统计
+
+import java.util
+import cn.neucloud.dasuan.analysis.stat.BaseStatistic
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.SparkConf
+//spark环境准备
+val conf = new SparkConf().setAppName("test").setMaster("local")
+val jsc = JavaSparkContext.fromSparkContext(sc)
+val sqlContext = new SQLContext(jsc)
+//数据准备
+val data = jsc.parallelize(
+      util.Arrays.asList(
+        Row("01","20.12","2016-08-01 01:00:01"),
+        Row("02","21.23","2016-08-01 01:00:02"),
+        Row("03","24.45","2016-08-01 01:00:06"),
+        Row("04","27.05","2016-08-01 01:00:07"),
+        Row("05","27.10","2016-08-01 01:00:09")
+      )
+    )
+val schemaString = "timestamp tempreature id"
+val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
+val df = sqlContext.createDataFrame(data, schema)
+val bs = new BaseStatistic
+//应用算法
+val dataFrame = bs.byIntervalWindow(jsc, df, 2, 1,5000l)
+dataFrame.printSchema()
+dataFrame.show()

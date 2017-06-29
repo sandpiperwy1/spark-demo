@@ -1,0 +1,28 @@
+%livy.spark
+
+//算法名称-白化
+
+import cn.neucloud.dasuan.analysis.filtering.Whitening
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.mllib.linalg.{VectorUDT, Vectors}
+import org.apache.spark.sql.types.{StructField, StructType, Metadata}
+import org.apache.spark.sql.{RowFactory, SQLContext}
+import org.apache.spark.SparkConf
+
+import java.util.Arrays
+//准备环境    
+val conf = new SparkConf().setAppName("PCA Example").setMaster("local[5]")
+val jsc = JavaSparkContext.fromSparkContext(sc)
+val sql = new SQLContext(sc)
+//准备数据
+val data = jsc.parallelize(Arrays.asList(
+RowFactory.create(Vectors.sparse(5,Array[Int] (1, 3), Array[Double](1.0, 7.0))),
+RowFactory.create(Vectors.dense(2.0, 0.0,3.0, 4.0, 5.0) ),
+	RowFactory.create(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0) ) ) )
+ val schema = StructType(Array[StructField] (new StructField("features", new VectorUDT(), false, Metadata.empty)))
+ var df = sql.createDataFrame(data, schema)
+//应用算法    
+var result = Whitening.PCAWhiten(jsc, df, 2, "features")
+result.show()
+result.collect().map(x=>println(x))
+

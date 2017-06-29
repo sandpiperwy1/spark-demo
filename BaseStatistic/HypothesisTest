@@ -1,0 +1,23 @@
+%livy.spark
+
+//算法名称-假设检验
+
+import cn.neucloud.dasuan.analysis.stat.hypotest.HypothesisTesting
+
+//生成一组样本 均值为4 标准差为1.7
+var vector = new java.util.Vector[java.lang.Double]{}
+vector.add(0,1.0)
+vector.add(1,2.0)
+vector.add(2,7.0)
+vector.add(3,3.0)
+vector.add(4,3.0)
+vector.add(5,4.0)
+vector.add(6,4.0)
+vector.add(7,5.0)
+vector.add(8,5.0)
+vector.add(9,6.0)
+val htResultBean1 = HypothesisTesting.uTest(vector,3.0,0.01,1.7)
+println(htResultBean1.getConclusion())
+println(htResultBean1.getFreedom())
+println(htResultBean1.getStatistic())
+println(htResultBean1.getPvalue())
