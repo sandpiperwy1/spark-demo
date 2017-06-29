@@ -1,0 +1,22 @@
+%livy.spark
+
+//算法名称-相关性
+
+import cn.neucloud.dasuan.analysis.stat.CorRelations
+import cn.neucloud.dasuan.utils.Spark_Log
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.sql.{Row}
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+val data = sc.parallelize(
+  List(
+    Row(1.0),
+    Row(22.0),
+    Row(13.0),
+    Row(8.0)
+  )
+)
+val schema = StructType(Seq(StructField("feature", DoubleType, true)))
+val df = sqlContext.createDataFrame(data, schema)
+val com = CorRelations.computOne(df,df)
+println("Correlation:"+com)
+
