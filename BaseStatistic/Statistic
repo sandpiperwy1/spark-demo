@@ -1,5 +1,6 @@
-//基本统计
 %livy.spark
+
+//算法名称-基本统计
 
 import java.util
 import cn.neucloud.dasuan.analysis.stat.BaseStatistic
