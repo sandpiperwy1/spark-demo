@@ -11,7 +11,6 @@
 规范化（Normalization）；
 
 时序分析：
-时序模型（内存版）；
 Sessionize；
 
 聚类 （Clustering）：
