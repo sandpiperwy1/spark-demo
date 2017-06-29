@@ -25,7 +25,4 @@ Kmeans （轮廓系数）；
 过滤 （Filtering）：
 白化；
 
-关联规则（Association）：
-FPGrowth；
-
 本项目中是上述分析算法的示例代码
