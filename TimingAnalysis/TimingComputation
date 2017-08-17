@@ -1,0 +1,52 @@
+//算法名称-时序计算(TimingComputation)
+import java.sql.Timestamp
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
+import cn.neucloud.dasuan.SparkContextImpl
+import com.cloudera.sparkts.{BusinessDayFrequency, DateTimeIndex}
+import org.apache.spark.sql.types._
+import cn.neucloud.dasuan.analysis.timeseries.sparkts._
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.{SparkConf, SparkContext}
+val sqlContext = new SQLContext(sc)
+//数据准备
+val data = ("2015\t8\t14\tINTC\t1533614\t29.44\n2015\t9\t14\tPAYX\t343119\t45.44\n2015\t8\t31\tUSB\t335356\t42.44\n" +
+  "2015\t9\t2\tXLNX\t388414\t40.44\n2015\t8\t6\tAEP\t76758\t56.44\n2015\t8\t18\tHRS\t37456\t82.44\n" +
+  "2015\t8\t3\tTGT\t289356\t80.44\n2015\t9\t8\tISRG\t84925\t520.44\n2015\t8\t26\tSYMC\t565054\t20.44\n" +
+  "2015\t9\t9\tTSN\t116301\t42.44\n2015\t8\t20\tFFIV\t72080\t126.44\n2015\t9\t1\tGOOG\t253612\t597.44\n" +
+  "2015\t8\t3\tCMCSA\t687076\t63.44\n2015\t8\t21\tMDLZ\t1807436\t43.44\n2015\t8\t6\tMAT\t352594\t22.44\n" +
+  "2015\t8\t14\tINTC\t1533614\t29.66\n2015\t9\t14\tPAYX\t343119\t45.66\n2015\t8\t31\tUSB\t335356\t42.66\n" +
+  "2015\t9\t2\tXLNX\t388414\t40.66\n2015\t8\t6\tAEP\t76758\t56.66\n2015\t8\t18\tHRS\t37456\t82.66\n" +
+  "2015\t8\t3\tTGT\t289356\t80.66\n2015\t9\t8\tISRG\t84925\t520.66\n2015\t8\t26\tSYMC\t565054\t20.66\n2015\t9\t9\tTSN\t116301\t42.66\n" +
+  "2015\t8\t20\tFFIV\t72080\t126.66\n2015\t9\t1\tGOOG\t253612\t597.66\n2015\t8\t3\tCMCSA\t687076\t63.66\n" +
+  "2015\t8\t21\tMDLZ\t1807436\t43.66\n2015\t8\t6\tMAT\t352594\t22.66").split("\n")
+ 
+val rdd = sc.parallelize(data)
+val rowRdd = rdd.map { line =>
+  val tokens = line.split('\t')
+  val dt = ZonedDateTime.of(tokens(0).toInt, tokens(1).toInt, tokens(2).toInt, 0, 0, 0, 0,
+ZoneId.systemDefault())
+  println(dt.toInstant)
+  val symbol = tokens(3)
+  val price = tokens(5).toDouble
+  Row(Timestamp.from(dt.toInstant), symbol, price)
+}
+val fields = Seq(
+  StructField("timestamp", TimestampType, true),
+StructField("symbol", StringType, true),
+StructField("price", DoubleType, true)
+)
+val schema = StructType(fields)
+val tickerObs = sqlContext.createDataFrame(rowRdd, schema)
+println("DataFrame...: " + tickerObs.count())
+
+val zone = ZoneId.systemDefault()
+val dtIndex = DateTimeIndex.uniformFromInterval(
+  ZonedDateTime.of(LocalDateTime.parse("2015-08-03T00:00:00"), zone),
+  ZonedDateTime.of(LocalDateTime.parse("2015-10-29T00:00:00"), zone),
+  new BusinessDayFrequency(1))
+
+val timeSeriesRDD = TimeSeriesRDD.fromObservations(dtIndex, tickerObs, "timestamp", "symbol", "price")
+timeSeriesRDD.differences(2)
+timeSeriesRDD.fill("linear")
+val instantDF = timeSeriesRDD.toInstantsDataFrame(sqlContext,-1)
+println(instantDF)
