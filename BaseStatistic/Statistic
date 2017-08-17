@@ -1,32 +1,41 @@
-%livy.spark
-
-//算法名称-基本统计
-
-import java.util
+//算法名称-基本统计(Statistic)
 import cn.neucloud.dasuan.analysis.stat.BaseStatistic
-import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SQLContext}
-import org.apache.spark.SparkConf
-//spark环境准备
-val conf = new SparkConf().setAppName("test").setMaster("local")
-val jsc = JavaSparkContext.fromSparkContext(sc)
-val sqlContext = new SQLContext(jsc)
+import cn.neucloud.viz.cn.neucloud.viz.analysis.Visualize
+ //spark环境准备
+val sqlContext = new SQLContext(sc)
 //数据准备
-val data = jsc.parallelize(
-      util.Arrays.asList(
+val data = sc.parallelize(
+        Seq(
         Row("01","20.12","2016-08-01 01:00:01"),
         Row("02","21.23","2016-08-01 01:00:02"),
         Row("03","24.45","2016-08-01 01:00:06"),
         Row("04","27.05","2016-08-01 01:00:07"),
-        Row("05","27.10","2016-08-01 01:00:09")
-      )
+        Row("05","27.10","2016-08-01 01:00:09"),
+        Row("06","23.18","2016-08-01 01:00:11"),
+        Row("07","29.10","2016-08-01 01:00:12"),
+        Row("08","30.34","2016-08-01 01:00:34"),
+        Row("09","20.10","2016-08-01 01:00:44"),
+        Row("10","25.90","2016-08-01 01:00:45"),
+        Row("11","26.40","2016-08-01 01:00:47"),
+        Row("12","28.39","2016-08-01 01:00:50"),
+        Row("13","23.33","2016-08-01 01:01:01"),
+        Row("14","20.23","2016-08-01 01:01:02"),
+        Row("15","20.93","2016-08-01 01:01:04"),
+        Row("16","22.1","2016-08-01 01:01:06"),
+        Row("17","25.90","2016-08-01 01:01:08"),
+        Row("18","28.30","2016-08-01 01:01:10"),
+        Row("19","22.30","2016-08-01 01:01:12"),
+        Row("20","29.20","2016-08-01 01:01:14"),
+        Row("21","19.40","2016-08-01 01:01:18")
+        )
     )
 val schemaString = "timestamp tempreature id"
 val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
 val df = sqlContext.createDataFrame(data, schema)
 val bs = new BaseStatistic
 //应用算法
-val dataFrame = bs.byIntervalWindow(jsc, df, 2, 1,5000l)
+val dataFrame = bs.byIntervalWindow(sc, df, 2, 1,5000l)
 dataFrame.printSchema()
 dataFrame.show()

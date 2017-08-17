@@ -1,27 +1,22 @@
-%livy.spark
-
-//算法名称-线性回归
-
+//算法名称-线性回归(LinerRegression)
 import cn.neucloud.dasuan.analysis.bean.LRBean
 import cn.neucloud.dasuan.analysis.regression.DSLinearRegression
-import org.apache.spark.SparkConf
-import org.apache.spark.api.java.JavaSparkContext
+import cn.neucloud.viz.cn.neucloud.viz.analysis.Visualize
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, SQLContext}
-
-    val sqlContext = new SQLContext(sc)
-    val dataset: DataFrame = sqlContext.createDataFrame(Seq(
+import org.apache.spark.{SparkContext, SparkConf}
+//数据准备
+ val data: DataFrame = sqlContext.createDataFrame(Seq(
       (-5.6, Vectors.sparse(1, Array(0), Array(0.6))),
       (-5.8, Vectors.sparse(1, Array(0), Array(0.8)))
     )).toDF("label", "features")
-    val bean = new LRBean()
-    bean.setRegParam(0.3)
-    bean.setStandardization(true)
-    val lr = new DSLinearRegression()
-    var linearModel = lr.linearRegression(dataset, bean)
-    println("Coefficients: "
+val bean = new LRBean()
+bean.setRegParam(0.3)
+bean.setStandardization(true)
+val lr = new DSLinearRegression()
+var linearModel = lr.linearRegression(data, bean)
+println("Coefficients: "
       + linearModel.coefficients + " Intercept: " + linearModel.intercept)
-    val predictArr = Array(0.5);
-    val result = lr.predict(linearModel, predictArr)
+val predictArr = Array(0.5);
+val result = lr.predict(linearModel, predictArr)
 println(result)
-
