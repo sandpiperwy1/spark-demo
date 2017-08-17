@@ -1,33 +1,29 @@
-%livy.spark
-
 //算法名称-Sessionize
-
-import java.util 
 import cn.neucloud.dasuan.analysis.timeseries.Sessionize
-import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SQLContext}
-import org.apache.spark.SparkConf
-
+import cn.neucloud.viz.cn.neucloud.viz.analysis.Visualize
 //环境准备
-val conf = new SparkConf().setMaster("local").setAppName("testSessionize")
-val jsc = JavaSparkContext.fromSparkContext(sc)
-val sqlContext = new SQLContext(jsc)
+val sqlContext = new SQLContext(sc)
 //数据准备
-val data = jsc.parallelize(
-   util.Arrays.asList(
+val data = sc.parallelize(
+   Seq(
      Row("01","20.12","2016-08-01 01:00:01"),
      Row("02","21.23","2016-08-01 01:00:02"),
      Row("03","24.45","2016-08-01 01:00:06"),
      Row("04","27.05","2016-08-01 01:00:07"),
-     Row("05","27.10","2016-08-01 01:00:09")
-   )
+     Row("05","27.10","2016-08-01 01:00:09"),
+     Row("06","23.18","2016-08-01 01:00:11"),
+     Row("07","29.10","2016-08-01 01:00:12")
+     ),1
  )
 val schemaString = "timestamp tempreature id"
 val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
 val df = sqlContext.createDataFrame(data, schema)
+//数据备注名sessionize-0.2
 var s = new Sessionize
 //应用算法
-var df1 = s.byInterval(jsc, df, 3000L, 2L, 20L)
+var df1 = s.byInterval(sc, df, 3000L, 2L, 20L)
 df1.show
+
