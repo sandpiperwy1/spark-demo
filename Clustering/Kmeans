@@ -1,7 +1,4 @@
-%livy.spark
-
 //算法名称-K-means
-
 import cn.neucloud.dasuan.SparkContextImpl
 import cn.neucloud.dasuan.analysis.clustering.{BisectingKMeans, GaussianMixture, KMeans}
 import cn.neucloud.dasuan.utils.DFTools
@@ -9,6 +6,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.{DataFrame, Row, SQLContext}
 val sqlContext = new SQLContext(sc)
+//数据准备
 val dataset: DataFrame = sqlContext.createDataFrame(Seq(
   (1, Vectors.dense(0.0, 0.0, 0.0)),
 (2, Vectors.dense(0.1, 0.1, 0.1)),
@@ -17,16 +15,12 @@ val dataset: DataFrame = sqlContext.createDataFrame(Seq(
 (5, Vectors.dense(9.1, 9.1, 9.1)),
 (6, Vectors.dense(9.2, 9.2, 9.2))
 )).toDF("id", "features")
-
 val k = 3
 val numIterations = 20
-val df = DFTools.df2DF4Kmeans(dataset, sc)
-
+val df = DFTools.df2DF4Kmeans(dataset, sc) 
 val kmeans = new KMeans(df)
-val clust = kmeans.clusterCenters(k, numIterations)
-
-println("Forecast category " + kmeans.predict(Array(0, 0.0, 0.0, 1.0), clust))
+val clust = kmeans.clusterCenters(k, numIterations) 
+println("Forecast category: " + kmeans.predict(Array(0, 0.0, 0.0, 1.0), clust))
 println("Center point: " + kmeans.printCenters)
 println("Contour factor: " + kmeans.silin.toString)
-println("Euclidean distance: " + kmeans.ouj(clust))
-
+println("Euclidean distance:" + kmeans.ouj(clust)) 
