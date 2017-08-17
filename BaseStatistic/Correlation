@@ -1,12 +1,10 @@
-%livy.spark
-
-//算法名称-相关性
-
+//算法名称-相关性(Correlation)
 import cn.neucloud.dasuan.analysis.stat.CorRelations
 import cn.neucloud.dasuan.utils.Spark_Log
 import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
 import org.apache.spark.sql.{Row}
 val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+//数据准备
 val data = sc.parallelize(
   List(
     Row(1.0),
@@ -17,6 +15,16 @@ val data = sc.parallelize(
 )
 val schema = StructType(Seq(StructField("feature", DoubleType, true)))
 val df = sqlContext.createDataFrame(data, schema)
-val com = CorRelations.computOne(df,df)
-println("Correlation:"+com)
-
+val data1 = sc.parallelize(
+  List(
+    Row(1.5),
+    Row(26.0),
+    Row(11.0),
+    Row(8.0)
+  )
+)
+val schema1 = StructType(Seq(StructField("feature", DoubleType, true)))
+val df1 = sqlContext.createDataFrame(data1, schema1)
+//应用算法
+val com = CorRelations.computOne(df,df1)
+println("Correlation : "+com)
