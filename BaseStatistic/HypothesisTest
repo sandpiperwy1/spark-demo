@@ -12,6 +12,7 @@ vector.add(6,4.0)
 vector.add(7,5.0)
 vector.add(8,5.0)
 vector.add(9,6.0)
+//应用算法,方法: uTest: u均值检验,参数: 样本: vector, 均值:3.0, 标准差:0.01, 显著性水平:1.7
 val htResultBean = HypothesisTesting.uTest(vector,3.0,0.01,1.7)
 println("conclusion: "+htResultBean.getConclusion())
 println("freedom: "+htResultBean.getFreedom())
