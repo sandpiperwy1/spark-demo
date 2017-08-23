@@ -25,6 +25,6 @@ val data1 = sc.parallelize(
 )
 val schema1 = StructType(Seq(StructField("feature", DoubleType, true)))
 val df1 = sqlContext.createDataFrame(data1, schema1)
-//应用算法
+//应用算法,参数: Tx:df, Ty:df1
 val com = CorRelations.computOne(df,df1)
 println("Correlation : "+com)
