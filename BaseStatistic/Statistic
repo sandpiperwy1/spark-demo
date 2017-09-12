@@ -2,7 +2,7 @@
 import cn.neucloud.dasuan.analysis.stat.BaseStatistic
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{Row, SQLContext}
-import cn.neucloud.viz.cn.neucloud.viz.analysis.Visualize
+//import cn.neucloud.viz.cn.neucloud.viz.analysis.Visualize
  //spark环境准备
 val sqlContext = new SQLContext(sc)
 //数据准备
@@ -36,7 +36,7 @@ val schemaString = "id tempreature timestamp"
 val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
 val df = sqlContext.createDataFrame(data, schema)
 val bs = new BaseStatistic
-//应用算法,参数:数据对象:df, 时间列:2, 所需求值的列:1, 时间窗口:5000l为5000毫秒
-val dataFrame = bs.byIntervalWindow(sc, df, 2, 1,5000l)
+//应用算法,参数:数据对象:df,时间窗口:5000l为5000毫秒
+val dataFrame = bs.byIntervalWindow(df, "timestamp", "tempreature",5000l)
 dataFrame.printSchema()
 dataFrame.show()
