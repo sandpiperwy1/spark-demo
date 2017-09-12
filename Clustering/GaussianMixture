@@ -22,7 +22,7 @@ val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fiel
 val df = sqlContext.createDataFrame(data, schema)
 //应用算法gaussianMixture-0.2
 val gaussianMixture = new GaussianMixture
-val model = gaussianMixture.cluster(sc,df, 3, 10, 0.001, 0)
+val model = gaussianMixture.cluster(df, 3, 10, 0.001, 0)
 val weights = model.weights
 for(i<-0 until(weights.length)){
   println(weights(i))
