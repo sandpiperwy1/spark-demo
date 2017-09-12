@@ -33,4 +33,7 @@ Kmeans （轮廓系数）；
 关联规则（Association）：
 FPGrowth；
 
+SPath：
+Spath；
+
 本项目中是上述分析算法的示例代码
