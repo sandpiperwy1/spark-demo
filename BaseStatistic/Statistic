@@ -31,7 +31,8 @@ val data = sc.parallelize(
         Row("21","19.40","2016-08-01 01:01:18")
         )
     )
-val schemaString = "timestamp tempreature id"
+//val schemaString = "timestamp tempreature id"
+val schemaString = "id tempreature timestamp"
 val schema =StructType(schemaString.split(" ").map(fieldName => StructField(fieldName, StringType, true)))
 val df = sqlContext.createDataFrame(data, schema)
 val bs = new BaseStatistic
