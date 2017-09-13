@@ -1,0 +1,132 @@
+import cn.neucloud.dasuan.analysis.spath.SPathDistribute
+import cn.neucloud.dasuan.analysis.spath.nfa.SelectionPolicy
+import cn.neucloud.dasuan.analysis.spath.nfa.NFA
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.PairRDDFunctions
+import cn.neucloud.dasuan.analysis.spath.parser.PartitionParser
+import net.sf.json.JSONArray
+import net.sf.json.JSONObject
+import org.apache.log4j.{Level, Logger}
+import cn.neucloud.viz.analysis.Visualize
+import cn.neucloud.bigdata.taskserver.bean.viz.algtype.AlgorithmTypes
+import cn.neucloud.bigdata.taskserver.bean.viz.config._
+import cn.neucloud.bigdata.taskserver.bean.viz.viztype._
+import cn.neucloud.dasuan.analysis.spath.sankey.{SPathGraphGenOnline, SPathVizConfig}
+import cn.neucloud.dasuan.analysis.timeseries.Sessionize
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{StructField, _}
+
+
+
+val json = Seq[String](
+      "{'sessionid':'100001','timeid':0,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_0'}",
+      "{'sessionid':'100001','timeid':1,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_1'}",
+      "{'sessionid':'100001','timeid':2,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_2'}",
+      "{'sessionid':'100001','timeid':3,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_3'}",
+      "{'sessionid':'100001','timeid':4,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_4'}",
+      "{'sessionid':'100001','timeid':5,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_5'}",
+      "{'sessionid':'100001','timeid':6,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_6'}",
+      "{'sessionid':'100001','timeid':7,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_7'}",
+      "{'sessionid':'100001','timeid':8,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_8'}",
+      "{'sessionid':'100001','timeid':9,'pagetype':'checkout','pageid':100,'productprice':89.99,'productname':'system_9'}",
+      "{'sessionid':'100001','timeid':10,'pagetype':'thankyou','pageid':100,'productprice':10,'productname':'system_10'}",
+      "{'sessionid':'100001','timeid':11,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_11'}",
+      "{'sessionid':'100001','timeid':12,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_12'}",
+      "{'sessionid':'100001','timeid':13,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_13'}",
+      "{'sessionid':'100001','timeid':14,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_14'}",
+      "{'sessionid':'100001','timeid':15,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_15'}",
+      "{'sessionid':'100001','timeid':16,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_16'}",
+      "{'sessionid':'100001','timeid':17,'pagetype':'productview','pageid':100,'productprice':1500.32,'productname':'food2_17'}",
+      "{'sessionid':'100001','timeid':18,'pagetype':'submit1','pageid':100,'productprice':100,'productname':'system_18'}",
+      "{'sessionid':'100001','timeid':19,'pagetype':'submit2','pageid':100,'productprice':100,'productname':'system_19'}",
+      "{'sessionid':'100001','timeid':20,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_20'}",
+      "{'sessionid':'100001','timeid':21,'pagetype':'thankyou','pageid':111,'productprice':999.99,'productname':'system_21'}",
+      "{'sessionid':'100001','timeid':22,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_22'}",
+      "{'sessionid':'100001','timeid':23,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_23'}",
+      "{'sessionid':'100001','timeid':24,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_24'}",
+      "{'sessionid':'100001','timeid':25,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_25'}",
+      "{'sessionid':'100001','timeid':26,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_26'}",
+      "{'sessionid':'100001','timeid':27,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_27'}",
+      "{'sessionid':'100001','timeid':28,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_28'}",
+      "{'sessionid':'100001','timeid':29,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'system_29'}",
+      "{'sessionid':'100001','timeid':30,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'system_30'}",
+
+      "{'sessionid':'100005','timeid':0,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_0'}",
+      "{'sessionid':'100005','timeid':1,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_1'}",
+      "{'sessionid':'100005','timeid':2,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_2'}",
+      "{'sessionid':'100005','timeid':3,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food1_3'}",
+      "{'sessionid':'100005','timeid':4,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_4'}",
+      "{'sessionid':'100005','timeid':5,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_5'}",
+      "{'sessionid':'100005','timeid':6,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_6'}",
+      "{'sessionid':'100005','timeid':7,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_7'}",
+      "{'sessionid':'100005','timeid':8,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_8'}",
+      "{'sessionid':'100005','timeid':9,'pagetype':'checkout','pageid':100,'productprice':89.99,'productname':'system_9'}",
+      "{'sessionid':'100005','timeid':10,'pagetype':'thankyou','pageid':100,'productprice':10,'productname':'system_10'}",
+      "{'sessionid':'100005','timeid':11,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_11'}",
+      "{'sessionid':'100005','timeid':12,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_12'}",
+      "{'sessionid':'100005','timeid':13,'pagetype':'home','pageid':100,'productprice':100,'productname':'category_13'}",
+      "{'sessionid':'100005','timeid':14,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_14'}",
+      "{'sessionid':'100005','timeid':15,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_15'}",
+      "{'sessionid':'100005','timeid':16,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food2_16'}",
+      "{'sessionid':'100005','timeid':17,'pagetype':'productview','pageid':100,'productprice':1500.32,'productname':'food2_17'}",
+      "{'sessionid':'100005','timeid':18,'pagetype':'submit1','pageid':100,'productprice':100,'productname':'system_18'}",
+      "{'sessionid':'100005','timeid':19,'pagetype':'submit2','pageid':100,'productprice':100,'productname':'system_19'}",
+      "{'sessionid':'100005','timeid':20,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_20'}",
+      "{'sessionid':'100005','timeid':21,'pagetype':'thankyou','pageid':111,'productprice':999.99,'productname':'system_21'}",
+      "{'sessionid':'100005','timeid':22,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_22'}",
+      "{'sessionid':'100005','timeid':23,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_23'}",
+      "{'sessionid':'100005','timeid':24,'pagetype':'productview','pageid':100,'productprice':999.99,'productname':'food3_24'}",
+      "{'sessionid':'100005','timeid':25,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_25'}",
+      "{'sessionid':'100005','timeid':26,'pagetype':'submit','pageid':100,'productprice':999.99,'productname':'system_26'}",
+      "{'sessionid':'100005','timeid':27,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'system_27'}",
+      "{'sessionid':'100005','timeid':28,'pagetype':'thankyou','pageid':100,'productprice':999.99,'productname':'system_28'}",
+      "{'sessionid':'100005','timeid':29,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'system_29'}",
+      "{'sessionid':'100005','timeid':30,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'system_30'}",
+
+      "{'sessionid':'100002','timeid':0,'pagetype':'home','pageid':100,'productprice':100,'productname':'system_01'}",
+      "{'sessionid':'100002','timeid':1,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_02'}",
+      "{'sessionid':'100002','timeid':2,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_03'}",
+      "{'sessionid':'100002','timeid':3,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_04'}",
+      "{'sessionid':'100002','timeid':4,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_05'}",
+      "{'sessionid':'100002','timeid':5,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_06'}",
+      "{'sessionid':'100002','timeid':6,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_07'}",
+      "{'sessionid':'100002','timeid':7,'pagetype':'productview1','pageid':100,'productprice':100,'productname':'food3_08'}",
+      "{'sessionid':'100002','timeid':8,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_09'}",
+      "{'sessionid':'100002','timeid':9,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'food3_10'}",
+      "{'sessionid':'100002','timeid':10,'pagetype':'thankyou','pageid':111,'productprice':999.99,'productname':'food3_11'}",
+      "{'sessionid':'100002','timeid':11,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'food3_12'}",
+      "{'sessionid':'100002','timeid':12,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'food3_13'}",
+      "{'sessionid':'100002','timeid':13,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'food3_14'}",
+      "{'sessionid':'100002','timeid':14,'pagetype':'home','pageid':100,'productprice':100,'productname':'system_15'}",
+      "{'sessionid':'100002','timeid':15,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_16'}",
+      "{'sessionid':'100002','timeid':16,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_17'}",
+      "{'sessionid':'100002','timeid':17,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_18'}",
+      "{'sessionid':'100002','timeid':18,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_19'}",
+      "{'sessionid':'100002','timeid':19,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_20'}",
+      "{'sessionid':'100002','timeid':20,'pagetype':'productview2','pageid':100,'productprice':100,'productname':'food3_21'}",
+      "{'sessionid':'100002','timeid':21,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_22'}",
+      "{'sessionid':'100002','timeid':22,'pagetype':'productview','pageid':100,'productprice':100,'productname':'food3_23'}",
+      "{'sessionid':'100002','timeid':23,'pagetype':'checkout','pageid':100,'productprice':999.99,'productname':'food3_24'}",
+      "{'sessionid':'100002','timeid':24,'pagetype':'thankyou','pageid':111,'productprice':999.99,'productname':'food3_25'}",
+      "{'sessionid':'100002','timeid':25,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'food3_26'}",
+      "{'sessionid':'100002','timeid':26,'pagetype':'checkout','pageid':100,'productprice':1.99,'productname':'food3_27'}"
+
+    )
+
+
+    val sqlStatm ="PARTITION by sessionid ORDER BY timeid "+"PATTERN('H1+.D2{1,3}.X3*.D2{1,2}.M1{2}.P4.S5') "+"SYMBOLS" +"(" +"'true' AS X3," +"pagetype = 'home' AS H1," +"pagetype <> 'home' AND pagetype <> 'checkout' AS D2," +"pageid > 50 AND productprice > 92.00 AND lag(pagetype,1,STR)!=pagetype AS M1," +"pagetype = 'checkout' AND productprice > 102.00 AS P4," +"pagetype = 'thankyou' AND productprice > 101 AS S5" +") " +"RESULT" +"(" +"First (timeid OF ANY (D2, X3)) AS timeid, " +"First (pageid of H1) AS pageid, " +"First (productprice of P4) AS productprice, " +"First (1 OF ANY) AS score_col, " + "Accumulate (CDISTINCT pagetype OF ANY (D2,X3,P4)) AS products_accumulate_cdis, " +"Accumulate (pagetype OF ANY (D2,X3,P4)) AS products_accumulate, " +"Accumulate (pagetype OF ANY) AS products_accumulate_any, " +"COUNT (DISTINCT productprice OF ANY(H1,D2,X3,P4,S5)) AS count_products_dis, " +"COUNT (productprice OF ANY(H1,D2,X3,P4,S5)) AS count_products, " +"COUNT (productprice OF ANY) AS all_counts, " +"MAX_CHOOSE (productprice, productname OF ANY(H1,D2,X3,P4,M1,S5)) AS max_product, "+") ORDER BY sessionid" +"SPATHVIZ"+"(" +"Frequency_Col ('score_col'), "+"Path_Col ('products_accumulate_any'), "+"Graph_Type ('sankey')"+")";
+
+        
+    val sqlContext = new SQLContext(sc)
+    val source = sc.parallelize[String](json)
+
+    val df = sqlContext.read.json(source)
+    val pathResult = SPathDistribute.compute(df, sqlContext, sqlStatm, SelectionPolicy.ALL_TRUE_LEAST_POLICY, NFA.ALL_MODE)
+
+    println("---resultJson---")
+    println(pathResult.toString)
+    println("----------------------")

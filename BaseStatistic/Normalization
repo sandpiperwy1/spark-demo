@@ -10,6 +10,6 @@ val data: DataFrame = sqlContext.createDataFrame(Seq(
     )).toDF("label", "features","id")
 val normalization = new Normalization()
 val arrColunms=Array("label","features","id")
-//应用算法
+//应用算法,方法: zscore: 按照(x-mean)/std标准化,参数: sc:sc, sqlContext: sqlContext, 数据源:data, 标准化的列: arrColunms
 val result= normalization.zscore(sc,sqlContext,data,arrColunms)
 result.show()

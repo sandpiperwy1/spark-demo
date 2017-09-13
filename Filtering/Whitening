@@ -13,7 +13,7 @@ RowFactory.create(Vectors.dense(4.0, 0.0, 0.0, 6.0, 7.0) ) ) )
 val schema = StructType(Array[StructField] (new StructField("features", new     VectorUDT(), false, Metadata.empty)))
 var df = sql.createDataFrame(data, schema)
 //应用算法    
-var result = Whitening.PCAWhiten(sc, df, 2, "features")
+var result = Whitening.PCAWhiten(df, 2, "features")
 result.show()
 result.collect().map(x=>println(x))
 

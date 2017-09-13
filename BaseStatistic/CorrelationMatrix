@@ -10,6 +10,6 @@ val data: DataFrame = sqlContext.createDataFrame(Seq(
       (-0.4, 6.0,22.0), (-0.25, 7.0,13.0), (-0.0, 8.0,8.0)
 )).toDF("label", "features","id")
 val correlationMatrix=new CorrelationMatrix()
-//应用算法
+//应用算法,参数: jsc:sc, sqlContext: sqlContext, 数据源: data
 val computeDf: DataFrame = correlationMatrix.compute(sc, sqlContext, data)
 computeDf.show()

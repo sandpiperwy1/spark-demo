@@ -17,7 +17,7 @@ val dataset: DataFrame = sqlContext.createDataFrame(Seq(
 )).toDF("id", "features")
 val k = 3
 val numIterations = 20
-val df = DFTools.df2DF4Kmeans(dataset, sc) 
+val df = DFTools.df2DF4Kmeans(dataset, sc, sqlContext) 
 val kmeans = new KMeans(df)
 val clust = kmeans.clusterCenters(k, numIterations) 
 println("Forecast category: " + kmeans.predict(Array(0, 0.0, 0.0, 1.0), clust))
