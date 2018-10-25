@@ -1,20 +1,20 @@
 //算法名称- FPGrowth
 import cn.neucloud.dasuan.analysis.fpgrowth.FPGrowth
-import org.apache.spark.mllib.fpm.FPGrowthModel
-import cn.neucloud.viz.analysis.Visualize
-//准备数据
-val data = sc.parallelize(
-  Seq(
-"r z h k p".split(" "),
-"z y x w v u t s".split(" "),
-"s x o n r".split(" "),
-"x z y m t s q e".split(" "),
-"z".split(" "),
-"x z y r q t p".split(" ")
-  )
-)
-val fpg = new FPGrowth(sc)
-//应用算法fpgrowth-0.2
-val model = fpg.fpGrowth(data,10,0.2)
-fpg.printFreqItem(model)
-fpg.printGenerateAssociation(model,0.8)
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+
+
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+val dataset = sc.parallelize(Seq(Row("r z h k p"),Row("z y x w v u t s"),Row("s x o n r"),Row("x z y m t s q e"),Row("z"),Row("x z y r q t p")))
+
+val schema = StructType(Seq(
+  StructField("value", StringType, true)
+))
+val dataFrame = sqlContext.createDataFrame(dataset, schema)
+
+dataFrame.show()
+
+val fpgrowth = new FPGrowth[String]()
+val result = fpgrowth.transform(dataFrame)
+result.show(80)
